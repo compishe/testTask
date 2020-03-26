@@ -1,4 +1,4 @@
-import {Component, Inject, OnInit} from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import {
   PatientFilterMain,
   PatientHistory,
@@ -6,10 +6,10 @@ import {
   PatientHistoryDocument,
   PatientHistoryDocumentDisplay
 } from '../../../interface/patient';
-import {MAT_DIALOG_DATA} from '@angular/material';
-import {PatientService} from '../../../service/patient.service';
-import {DictionaryService} from '../../../service/dictionary.service';
-import {PatientDictionary} from '../../../interface/dictionary';
+import { MAT_DIALOG_DATA } from '@angular/material';
+import { PatientService } from '../../../service/patient.service';
+import { DictionaryService } from '../../../service/dictionary.service';
+import { PatientDictionary } from '../../../interface/dictionary';
 
 @Component({
   selector: 'app-patient-history-modal',
@@ -20,13 +20,14 @@ import {PatientDictionary} from '../../../interface/dictionary';
 export class PatientHistoryModalComponent implements OnInit {
 
   constructor(@Inject(MAT_DIALOG_DATA) public idPatient: number,
-              private apiPatient: PatientService, private apiDictionary: DictionaryService) {
+    private apiPatient: PatientService, private apiDictionary: DictionaryService) {
     this.getDictionary();
   }
 
   patientHistory: PatientHistoryDisplay[] = [];
   patientDictionary: PatientDictionary[];
   displayDocumentHistory: PatientHistoryDocument[];
+  displayDocumentHistory1: PatientHistoryDocumentDisplay[];
   initHistory: PatientHistory;
 
   /**
@@ -104,12 +105,56 @@ export class PatientHistoryModalComponent implements OnInit {
     );
   }
 
+
   /**
    * @param history - история пациента Документы
    */
   displayHistory(history: PatientHistoryDocument[]) {
-
     this.displayDocumentHistory = history;
+    const getHistoryChange = (item: PatientHistoryDocumentDisplay, el: PatientHistoryDocument) => {
+      const changed =
+      {
+        name: el.osUser,
+        current: el.isEnabled ? el.number : null,
+        old: item ? item.historyChange[0].number : null,
+        operation: el.operation,
+        /*
+        * сохранение записи из истории для отображения в шаблоне данных об операции
+       * данные используются в записи об удалении и отображения времени события
+        */
+        item: el
+      }
+      return changed;
+    }
+
+    /*
+  * группировка истории пациента
+   */
+    const groupPatientHistory = (array: PatientHistoryDocumentDisplay[], element: PatientHistoryDocument) => {
+      const idx = array.findIndex(v => v.id === element.id);
+      if (idx >= 0) {
+        /*
+        * сохранение последней записи из истории
+        * формирование истории изменений changed
+         */
+        array[idx].historyChange[0] = element;
+        array[idx].historyChange[1].changed.push(getHistoryChange(array[idx], element));
+      } else {
+        /*  первая запись из истории по PatientHistoryDocument.id */
+        array.push({
+          id: element.id,
+          name: element.documentType.name,
+          historyChange: [element, { changed: [getHistoryChange(null, element)] }]
+        });
+      }
+      return array;
+    };
+
+    /*
+    * обрабатываем массив history
+     */
+    const groupedArray = history.reduce<PatientHistoryDocumentDisplay[]>(groupPatientHistory, []);
+    this.displayDocumentHistory1 = groupedArray;
   }
 
   /**
@@ -160,9 +205,9 @@ export class PatientHistoryModalComponent implements OnInit {
    * Но перед этим оно прохдит проверку для трансляций значений.
    */
   changeDetectionHistory(historyPrevious: PatientHistory, historyChanged: PatientHistory,
-                         historyPreviousFiltered: PatientFilterMain, historyChangedFiltered: PatientFilterMain
+    historyPreviousFiltered: PatientFilterMain, historyChangedFiltered: PatientFilterMain
   ) {
-    for (const [key]  of Object.entries(historyPreviousFiltered)) {
+    for (const [key] of Object.entries(historyPreviousFiltered)) {
       if (historyPreviousFiltered[key] !== historyChangedFiltered[key]) {
         const changeValue = PatientHistoryModalComponent.patientHistoryDisplayFilter(
           historyChanged, historyChangedFiltered, historyPreviousFiltered, key);

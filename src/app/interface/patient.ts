@@ -107,9 +107,9 @@ export class PatientHistoryDocumentDisplay {
           old: string,
           operation: string
         }
-        ]
+      ]
     }
-    ];
+  ];
 }
 
 export class ExternalDocument {

@@ -12,17 +12,17 @@
       <div class="row" id="pat_history">
         <table>
           <tbody>
-          <tr *ngIf="initHistory">
-            <td>{{initHistory.operationDate | date : 'dd.MM.yyyy'}} : пользователь {{initHistory.osUser}} создал карту
-            </td>
-          </tr>
-          <tr *ngFor="let patient of patientHistory">
-            <td>
-              {{patient.dateChange | date : 'dd.MM.yyyy' }}:
-              пользователь {{patient.osUser}} {{patient.operation}} {{patient.keyChange}} {{patient.fromChange}}
-              на {{patient.toChange}}
-            </td>
-          </tr>
+            <tr *ngIf="initHistory">
+              <td>{{initHistory.operationDate | date : 'dd.MM.yyyy'}} : пользователь {{initHistory.osUser}} создал карту
+              </td>
+            </tr>
+            <tr *ngFor="let patient of patientHistory">
+              <td>
+                {{patient.dateChange | date : 'dd.MM.yyyy' }}:
+                пользователь {{patient.osUser}} {{patient.operation}} {{patient.keyChange}} {{patient.fromChange}}
+                на {{patient.toChange}}
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -53,36 +53,43 @@
         </table>
 
         <ul class="collapsible" materialize="Collapsible">
-          <li *ngFor="let item of displayDocumentHistory; let index;">
-            <div class="collapsible-header"> {{item.name | json}}</div>
+          <li *ngFor="let item of displayDocumentHistory1; let index;">
+            <div class="collapsible-header"> {{item.name | json}} (#{{item.id}})</div>
             <div class="collapsible-body">
               <table>
                 <tbody>
-                <tr>
-                  <td>
-                    {{item.operationDate | date: 'dd.MM.yyyy'}} :
-                    пользователь {{item.osUser}} создал {{item.documentType.name}}
-                  </td>
-                </tr>
-                <ng-container *ngFor="let changedItem of item.historyChange">
-                  <tr *ngFor="let valuesChanged of changedItem.changed">
-                    <td *ngIf="valuesChanged.current else deleted">
-                      {{changedItem.operationDate | date : 'dd.MM.yyyy'}} :
-                      пользователь {{changedItem.osUser}} {{valuesChanged.name}} {{valuesChanged.operation}}
-                      c {{valuesChanged.old}}
-                      на {{valuesChanged.current}}
+                  <tr>
+                    <td>
+                      {{item.historyChange[0].operationDate | date: 'dd.MM.yyyy'}} :
+                      пользователь {{item.historyChange[0].osUser}} создал
+                      {{item.historyChange[0].documentType.name}}
                     </td>
-                    <ng-template #deleted>
-                      <td>
-                        {{changedItem.operationDate | date : 'dd.MM.yyyy'}} :
-                        пользователь {{changedItem.osUser}} удалил {{item.name}}
-                        <br>
-                        {{changedItem.number}} {{changedItem.series}},  {{changedItem.issuedBy}}
-                        , {{changedItem.issuedDate}}
-                      </td>
-                    </ng-template>
                   </tr>
-                </ng-container>
+                  <ng-container *ngFor="let changedItem of item.historyChange">
+                    <tr *ngFor="let valuesChanged of changedItem.changed">
+                      <ng-container [ngTemplateOutlet]="valuesChanged.current? current:deleted"></ng-container>
+                      <ng-template #current>
+                        <td>
+                          {{valuesChanged.item.operationDate | date : 'dd.MM.yyyy'}} :
+                          пользователь {{changedItem.osUser}} {{valuesChanged.name}} {{valuesChanged.operation}}
+                          c {{valuesChanged.old}}
+                          на {{valuesChanged.current}}
+                        </td>
+                      </ng-template>
+                      <ng-template #deleted>
+                        <td>
+                          {{valuesChanged.item.operationDate | date : 'dd.MM.yyyy'}} :
+                          пользователь {{valuesChanged.item.osUser}} удалил {{item.name}}
+                          <br>
+                          {{valuesChanged.item.number}} {{valuesChanged.item.series}},
+                          <ng-template *ngIf="valuesChanged.item.issuedBy">
+                            {{valuesChanged.item.issuedBy}} ,
+                          </ng-template>
+                          {{valuesChanged.item.issuedDate}}
+                        </td>
+                      </ng-template>
+                    </tr>
+                  </ng-container>
                 </tbody>
               </table>
             </div>
